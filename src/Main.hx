@@ -8,27 +8,28 @@ import snow.system.assets.Asset;
 
 class Main extends luxe.Game {
   override function ready() {
-    var request = new Http("http://localhost:40404/assets/logo_box.png");
+    var request = new js.html.XMLHttpRequest();
+    request.open("GET", "http://localhost:40404/assets/logo_box.png", true);
+    request.overrideMimeType('text/plain; charset=x-user-defined');
+    request.responseType = js.html.XMLHttpRequestResponseType.ARRAYBUFFER;
 
-    request.onData = function(data:String) {
+    request.onload = function(data) {
       trace("got image");
 
-      var _image = Uint8Array.fromBytes(haxe.io.Bytes.ofString(data));
-
-      Luxe.snow.assets.image_from_bytes("urlimage", _image)
-        .then(function(asset) {
-          init(asset);
-        })
-        .error(function(err) {
-          trace(err);
-        });
+      if (request.status == 200) {
+        Luxe.snow.assets.image_from_bytes("urlimage", new Uint8Array(request.response))
+          .then(function(asset) {
+            init(asset);
+          })
+          .error(function(err) {
+            trace(err);
+          });
+      } else {
+        trace(request.statusText);
+      }
     }
 
-    request.onError = function(msg :String) {
-      trace("error loading image:" + msg);
-    }
-
-    request.request();
+    request.send();
   } //ready
 
   function init(asset:AssetImage) {
